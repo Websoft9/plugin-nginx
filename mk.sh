@@ -1,5 +1,6 @@
 #!/bin/bash
-cd /data/stackhub-web/plugins/nginxproxymanager/build
+cd /data/cockpit-plugins/plugin-nginx/build
+
 yarn build
 while [ ! -d "/usr/share/cockpit/nginx" ]; do
   sleep 1
