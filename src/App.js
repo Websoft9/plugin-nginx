@@ -21,32 +21,39 @@ function App() {
     let nikeName = localStorage.getItem("nginx_nikeName");
     baseURL = protocol + "//" + (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(host) ? host.split(":")[0] : host);
 
-    if (!tokens || !nikeName) {
-      let data = await cockpit.spawn(["docker", "inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", "websoft9-appmanage"]);
-      let IP = data.trim();
-      if (IP) {
-        let response = await cockpit.http({ "address": IP, "port": 5000 }).get("/AppSearchUsers", { "plugin_name": "nginx" });
-        response = JSON.parse(response);
-        if (response.ResponseData) {
-          var userName = response.ResponseData.user?.user_name;
-          var userPwd = response.ResponseData.user?.password;
-          nikeName = response.ResponseData.user?.nick_name;
+    try {
+      if (!tokens || !nikeName) {
+        let data = await cockpit.spawn(["docker", "inspect", "-f", "{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}", "websoft9-appmanage"]);
+        let IP = data.trim();
+        if (IP) {
+          let response = await cockpit.http({ "address": IP, "port": 5000 }).get("/AppSearchUsers", { "plugin_name": "nginx" });
+          response = JSON.parse(response);
+          if (response.ResponseData) {
+            var userName = response.ResponseData.user?.user_name;
+            var userPwd = response.ResponseData.user?.password;
+            nikeName = response.ResponseData.user?.nick_name;
 
-          const authResponse = await axios.post(baseURL + "/nginxproxymanager/api/tokens", {
-            identity: userName,
-            secret: userPwd
-          });
-          if (authResponse.status === 200) {
-            tokens = authResponse.data.token;
-            window.localStorage.setItem("nginx_tokens", tokens);
-            window.localStorage.setItem("nginx_nikeName", nikeName);
-          } else {
-            setShowAlert(true);
-            setAlertMessage("Auth Nginxproxymanager Error.")
+            const authResponse = await axios.post(baseURL + "/nginxproxymanager/api/tokens", {
+              identity: userName,
+              secret: userPwd
+            });
+            if (authResponse.status === 200) {
+              tokens = authResponse.data.token;
+              window.localStorage.setItem("nginx_tokens", tokens);
+              window.localStorage.setItem("nginx_nikeName", nikeName);
+            } else {
+              setShowAlert(true);
+              setAlertMessage("Auth Nginxproxymanager Error.")
+            }
           }
         }
       }
     }
+    catch (error) {
+      setShowAlert(true);
+      setAlertMessage("Call Nginxproxymanager Page Error.")
+    }
+
 
     setIframeKey(Math.random());
     var newHash = window.location.hash;
