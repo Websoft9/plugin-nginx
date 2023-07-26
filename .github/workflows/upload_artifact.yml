@@ -22,12 +22,38 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Read plugin version
-        id: read-version
+      - name: Update CHANGELOG.md and public/manifest.json
+        id: update_data
         run: |
           version=$(jq -r '.Version' nginx.json)
-          echo "PLUGIN_VERSION=$version" >> $GITHUB_ENV
-
+          echo "PLUGIN_VERSION=$version" >> $GITHUB_OUTPUT
+          
+          changelog=$(cat changelog_latest.md)
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT 
+          echo "$changelog" >> $GITHUB_OUTPUT 
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          current_date=$(date +%Y-%m-%d)
+          printf "## $version release on $current_date\n$changelog\n" < CHANGELOG.md > temp.txt
+          mv temp.txt CHANGELOG.md
+      
+          jq -r --arg version "$version" '.version = $version' public/manifest.json > manifest.json.tmp
+          mv manifest.json.tmp public/manifest.json
+          
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Build Plugin and Upload Artifact
+        
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: /* 
+          tag_name: v${{ steps.update_data.outputs.PLUGIN_VERSION }}   
+          body: ${{ steps.update_data.outputs.CHANGELOG }}
+          draft: false
+          prerelease: true
+          
       - name: Create Zip Archive
         run: |
           mv build nginx
@@ -38,12 +64,30 @@ jobs:
         with:
           connection_string: ${{ secrets.AZURE_STORAGE_ARTIFACT }}
           container_name: release
-          source_folder: nginx-${{ env.PLUGIN_VERSION }}.zip
-          destination_folder: ./websoft9/plugin
+          source_folder: nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip
+          destination_folder: ./websoft9/plugin/nginx
           delete_if_exists: true
           fail_if_source_empty: true
-
-      - name: Commit and push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+          
+      - name: Checkout websoft9
+        uses: actions/checkout@v2
         with:
-          commit_message: Build Plugin and Upload Artifact to Azure Blob
+          repository: Websoft9/websoft9
+          ref: main
+      
+      - name: Update Version in websoft9/version.json
+        run: |
+          jq -r --arg version "${{ steps.update_data.outputs.PLUGIN_VERSION }}" '.PLUGINS.NGINX = $version' version.json > version.json.tmp
+          mv version.json.tmp version.json
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.ZJ_ADMIN_TOKEN }}
+          branch: update-nginx-version-${{ github.run_number }}
+          delete-branch: true
+          commit-message: Update Nginx Version
+          title: "Nginx Releases New Version : ${{ steps.update_data.outputs.PLUGIN_VERSION }}"
+          body: "Update the Nginx value in version.json to: ${{ steps.update_data.outputs.PLUGIN_VERSION }}"
+
+     
