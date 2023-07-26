@@ -4,3 +4,4 @@ node_modules
 build
 nginx
 nginx-*.zip
+artifacts
