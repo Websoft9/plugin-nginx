@@ -57,7 +57,7 @@ jobs:
       - name: Create Zip Archive
         run: |
           mv build nginx
-          zip -r nginx-${{ env.PLUGIN_VERSION }}.zip nginx/
+          zip -r nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip nginx/
 
       - name: Upload To Azure Blob
         uses: LanceMcCarthy/Action-AzureBlobUpload@v2
