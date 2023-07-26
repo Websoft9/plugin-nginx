@@ -5,3 +5,4 @@ build
 nginx
 nginx-*.zip
 artifacts
+mk.sh
