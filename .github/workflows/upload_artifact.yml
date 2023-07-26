@@ -1,9 +1,9 @@
-name: Upload Artifact To Azure Blob
+name: Build Plugin And Upload Artifact To Azure Blob
 
 on: workflow_dispatch
 
 jobs:
-  Upload_Artifact_To_Azure_Blob:
+  Build_Plugin_And_Upload_Artifact_To_Azure_Blob:
     runs-on: ubuntu-latest
     env:
       CI: false
