@@ -64,7 +64,7 @@ jobs:
           rsync -av --exclude='changelog_latest.md' *.md nginx/
           zip -r nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip nginx/
           cp CHANGELOG.md artifacts/
-          cp settings.json artifacts/
+          cp nginx.json artifacts/
           mv nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip artifacts/
 
       - name: Upload To Azure Blob
