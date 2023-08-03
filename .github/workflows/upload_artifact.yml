@@ -34,7 +34,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           
           current_date=$(date +%Y-%m-%d)
-          printf "## $version release on $current_date\n$changelog\n" < CHANGELOG.md > temp.txt
+          printf "## $version release on $current_date\n$changelog\n$(cat CHANGELOG.md)" > temp.txt
           mv temp.txt CHANGELOG.md
       
           jq -r --arg version "$version" '.version = $version' public/manifest.json > manifest.json.tmp
@@ -56,17 +56,23 @@ jobs:
           
       - name: Create Zip Archive
         run: |
+          mkdir artifacts
           mv build nginx
           cp CHANGELOG.md nginx
           cp nginx.json nginx
+          cp -r docs nginx
+          rsync -av --exclude='changelog_latest.md' *.md nginx/
           zip -r nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip nginx/
+          cp CHANGELOG.md artifacts/
+          cp settings.json artifacts/
+          mv nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip artifacts/
 
       - name: Upload To Azure Blob
         uses: LanceMcCarthy/Action-AzureBlobUpload@v2
         with:
           connection_string: ${{ secrets.AZURE_STORAGE_ARTIFACT }}
           container_name: release
-          source_folder: nginx-${{ steps.update_data.outputs.PLUGIN_VERSION }}.zip
+          source_folder: artifacts/
           destination_folder: ./websoft9/plugin/nginx
           delete_if_exists: true
           fail_if_source_empty: true

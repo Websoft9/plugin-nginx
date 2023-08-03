@@ -1,2 +1,1 @@
-1. Welcome to the Nginx
-2. Nginx Initial Version
+1. Verification of Token Validity for Newly Added nginx
