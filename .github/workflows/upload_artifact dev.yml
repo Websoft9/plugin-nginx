@@ -1,9 +1,9 @@
-name: Build New Version For Release
+name: Build New Version For Dev
 
 on: workflow_dispatch
 
 jobs:
-  Build_New_Version_For_Release:
+  Build_New_Version_For_Dev:
     runs-on: ubuntu-latest
     env:
       CI: false
@@ -43,16 +43,7 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: Build Plugin For Release
-        
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: /* 
-          tag_name: v${{ steps.update_data.outputs.PLUGIN_VERSION }}   
-          body: ${{ steps.update_data.outputs.CHANGELOG }}
-          draft: false
-          prerelease: true
+          commit_message: Build Plugin For Dev
           
       - name: Create Zip Archive
         run: |
@@ -71,8 +62,29 @@ jobs:
         uses: LanceMcCarthy/Action-AzureBlobUpload@v2
         with:
           connection_string: ${{ secrets.AZURE_STORAGE_ARTIFACT }}
-          container_name: release
+          container_name: dev
           source_folder: artifacts/
           destination_folder: ./websoft9/plugin/nginx
           delete_if_exists: true
           fail_if_source_empty: true
+          
+      - name: Checkout websoft9
+        uses: actions/checkout@v2
+        with:
+          repository: Websoft9/websoft9
+          ref: main
+      
+      - name: Update Version in websoft9/version.json
+        run: |
+          jq -r --arg version "${{ steps.update_data.outputs.PLUGIN_VERSION }}" '.PLUGINS.NGINX = $version' version.json > version.json.tmp
+          mv version.json.tmp version.json
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.ZJ_ADMIN_TOKEN }}
+          branch: update-nginx-version-${{ github.run_number }}
+          delete-branch: true
+          commit-message: Nginx Release New Version
+          title: "Nginx Releases New Version : ${{ steps.update_data.outputs.PLUGIN_VERSION }}"
+          body: ${{ steps.update_data.outputs.CHANGELOG }}

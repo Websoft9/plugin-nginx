@@ -17,8 +17,11 @@ function App() {
   let host = window.location.host;
   const baseURL = protocol + "//" + (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(host) ? host.split(":")[0] : host);
 
-  let tokens = localStorage.getItem("nginx_tokens");
-  let nikeName = localStorage.getItem("nginx_nikeName");
+  // let tokens = localStorage.getItem("nginx_tokens");
+  // let nikeName = localStorage.getItem("nginx_nikeName");
+
+  let tokens = window.sessionStorage.getItem('nginx_tokens');
+  let nikeName = window.sessionStorage.getItem('nginx_nikeName');
 
   //验证token是否过期
   function isTokenExpired(token) {
@@ -41,8 +44,11 @@ function App() {
       });
       if (authResponse.status === 200) {
         tokens = authResponse.data.token;
-        window.localStorage.setItem("nginx_tokens", tokens);
-        window.localStorage.setItem("nginx_nikeName", nikeName);
+        // window.localStorage.setItem("nginx_tokens", tokens);
+        // window.localStorage.setItem("nginx_nikeName", nikeName);
+
+        window.sessionStorage.setItem('nginx_tokens', tokens);
+        window.sessionStorage.setItem('nginx_nikeName', nikeName);
       } else {
         setShowAlert(true);
         setAlertMessage("Auth Nginxproxymanager Error.")
@@ -57,7 +63,7 @@ function App() {
       }
       else {
         const isExpired = isTokenExpired(tokens);
-        if (isExpired) { //如果已经过期，重新生成JWT
+        if (isExpired) { //如果已经过期，重新生成Tokens
           await getToken();
         }
       }
