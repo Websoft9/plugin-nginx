@@ -17,11 +17,17 @@ function App() {
   let host = window.location.host;
   const baseURL = protocol + "//" + (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(host) ? host.split(":")[0] : host);
 
-  // let tokens = localStorage.getItem("nginx_tokens");
-  // let nikeName = localStorage.getItem("nginx_nikeName");
-
-  let tokens = window.sessionStorage.getItem('nginx_tokens');
-  let nikeName = window.sessionStorage.getItem('nginx_nikeName');
+  //获取cookie
+  function getCookieValue(cookieName) {
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.split('=');
+      if (name === cookieName) {
+        return decodeURIComponent(value);
+      }
+    }
+    return null; // 如果没有找到该 Cookie 返回 null
+  }
 
   //验证token是否过期
   function isTokenExpired(token) {
@@ -36,19 +42,16 @@ function App() {
     if (response.ResponseData) {
       var userName = response.ResponseData.user?.user_name;
       var userPwd = response.ResponseData.user?.password;
-      nikeName = response.ResponseData.user?.nick_name;
+      var nikeName = response.ResponseData.user?.nick_name;
 
       const authResponse = await axios.post(baseURL + "/nginxproxymanager/api/tokens", {
         identity: userName,
         secret: userPwd
       });
       if (authResponse.status === 200) {
-        tokens = authResponse.data.token;
-        // window.localStorage.setItem("nginx_tokens", tokens);
-        // window.localStorage.setItem("nginx_nikeName", nikeName);
-
-        window.sessionStorage.setItem('nginx_tokens', tokens);
-        window.sessionStorage.setItem('nginx_nikeName', nikeName);
+        var tokens = authResponse.data.token;
+        document.cookie = "nginx_tokens=" + tokens + "; path=/";
+        document.cookie = "nginx_nikeName=" + nikeName + "; path=/";
       } else {
         setShowAlert(true);
         setAlertMessage("Auth Nginxproxymanager Error.")
@@ -57,6 +60,9 @@ function App() {
   }
 
   const getData = async () => {
+    const tokens = getCookieValue("nginx_tokens");
+    const nikeName = getCookieValue("nginx_nikeName");
+
     try {
       if (!tokens || !nikeName) {
         await getToken();
@@ -75,11 +81,11 @@ function App() {
         if (index > -1) {
           var content = newHash.slice(index + 1);
           setIframeKey(Math.random());
-          setIframeSrc(baseURL + content + "?Token=" + tokens + "&Name=" + nikeName);
+          setIframeSrc(baseURL + content);
         }
       }
       else {
-        setIframeSrc(baseURL + "/nginxproxymanager/?Token=" + tokens + "&Name=" + nikeName);
+        setIframeSrc(baseURL + "/nginxproxymanager/");
       }
     }
     catch (error) {
