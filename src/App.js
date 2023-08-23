@@ -30,9 +30,10 @@ function App() {
   }
 
   //验证token是否过期
-  function isTokenExpired(token) {
+  async function isTokenExpired(token) {
     const decodedToken = jwt_decode(token);
-    const currentTime = Math.floor(Date.now() / 1000);
+    const currentTime = await cockpit.spawn(["date", "+%s"]);
+    //const currentTime = Math.floor(Date.now() / 1000);
     return decodedToken.exp < currentTime;
   }
 
@@ -68,7 +69,7 @@ function App() {
         await getToken();
       }
       else {
-        const isExpired = isTokenExpired(tokens);
+        const isExpired = await isTokenExpired(tokens);
         if (isExpired) { //如果已经过期，重新生成Tokens
           await getToken();
         }
@@ -123,8 +124,8 @@ function App() {
             <iframe key={iframeKey} title='nginxproxymanager' src={iframeSrc} />
           </div>
         ) : (
-          <div className="d-flex align-items-center justify-content-center m-5">
-            <Spinner animation="border" variant="secondary" />
+          <div className="d-flex align-items-center justify-content-center m-5" style={{ flexDirection: "column" }}>
+            <Spinner animation="border" variant="secondary" className='mb-5' />
             {showAlert && <Alert variant="danger" className="my-2">
               {alertMessage}
             </Alert>}
