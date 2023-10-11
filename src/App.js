@@ -1,6 +1,7 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import cockpit from 'cockpit';
+import ini from 'ini';
 import jwt_decode from 'jwt-decode';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-bootstrap';
@@ -12,6 +13,7 @@ function App() {
   const [iframeKey, setIframeKey] = useState(Math.random());
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [tokenLoaded, setTokenLoaded] = useState(false);
 
   let protocol = window.location.protocol;
   let host = window.location.host;
@@ -38,14 +40,22 @@ function App() {
   }
 
   const getToken = async () => {
-    let response = await cockpit.http({ "address": "websoft9-appmanage", "port": 5000 }).get("/AppSearchUsers", { "plugin_name": "nginx" });
-    response = JSON.parse(response);
-    if (response.ResponseData) {
-      var userName = response.ResponseData.user?.user_name;
-      var userPwd = response.ResponseData.user?.password;
-      var nikeName = response.ResponseData.user?.nick_name;
+    var userName;
+    var userPwd;
+    var nikeName;
+    cockpit.file('/data/websoft9/appmanage_new/src/config/config.ini').read().then(async (content) => {
+      const config = ini.parse(content);
+      userName = config.nginx_proxy_manager.user_name
+      userPwd = config.nginx_proxy_manager.user_pwd
+      nikeName = config.nginx_proxy_manager.nike_name
 
-      const authResponse = await axios.post(baseURL + "/nginxproxymanager/api/tokens", {
+      if (!userName || !userPwd || !nikeName) {
+        setShowAlert(true);
+        setAlertMessage("Nginx Username or Password is empty.");
+        return;
+      }
+
+      const authResponse = await axios.post(baseURL + "/w9proxy/api/tokens", {
         identity: userName,
         secret: userPwd
       });
@@ -53,11 +63,15 @@ function App() {
         var tokens = authResponse.data.token;
         document.cookie = "nginx_tokens=" + tokens + "; path=/";
         document.cookie = "nginx_nikeName=" + nikeName + "; path=/";
+        setTokenLoaded(true);
       } else {
         setShowAlert(true);
         setAlertMessage("Auth Nginxproxymanager Error.")
       }
-    }
+    }).catch(error => {
+      setShowAlert(true);
+      setAlertMessage("Get Nginx Login Info Error.");
+    })
   }
 
   const getData = async () => {
@@ -77,7 +91,7 @@ function App() {
 
       setIframeKey(Math.random());
       var newHash = window.location.hash;
-      if (newHash.includes("/nginxproxymanager")) {
+      if (newHash.includes("/w9proxy")) {
         var index = newHash.indexOf("#");
         if (index > -1) {
           var content = newHash.slice(index + 1);
@@ -86,18 +100,18 @@ function App() {
         }
       }
       else {
-        setIframeSrc(baseURL + "/nginxproxymanager/");
+        setIframeSrc(baseURL + "/w9proxy/");
       }
     }
     catch (error) {
       setShowAlert(true);
-      setAlertMessage("Call Nginxproxymanager Page Error.")
+      setAlertMessage("Call Nginxproxymanager Page Error." + error)
     }
   }
 
   const handleHashChange = () => {
     var newHash = window.location.hash;
-    if (newHash.includes("/nginxproxymanager")) {
+    if (newHash.includes("/w9proxy")) {
       var index = newHash.indexOf("#");
       if (index > -1) {
         var content = newHash.slice(index + 1);
@@ -119,7 +133,7 @@ function App() {
   return (
     <>
       {
-        (iframeKey && iframeSrc) ? (
+        (iframeKey && iframeSrc && tokenLoaded) ? (
           <div className='myNginx' key='container'>
             <iframe key={iframeKey} title='nginxproxymanager' src={iframeSrc} />
           </div>
