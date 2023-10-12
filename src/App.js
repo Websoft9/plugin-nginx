@@ -87,11 +87,14 @@ function App() {
         if (isExpired) { //如果已经过期，重新生成Tokens
           await getToken();
         }
+        else {
+          setTokenLoaded(true);
+        }
       }
 
       setIframeKey(Math.random());
       var newHash = window.location.hash;
-      if (newHash.includes("/w9proxy")) {
+      if (newHash.includes("/w9proxy/nginx")) {
         var index = newHash.indexOf("#");
         if (index > -1) {
           var content = newHash.slice(index + 1);
@@ -111,7 +114,7 @@ function App() {
 
   const handleHashChange = () => {
     var newHash = window.location.hash;
-    if (newHash.includes("/w9proxy")) {
+    if (newHash.includes("/w9proxy/nginx")) {
       var index = newHash.indexOf("#");
       if (index > -1) {
         var content = newHash.slice(index + 1);
@@ -121,8 +124,8 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    autoLogin();
+  useEffect(async () => {
+    await autoLogin();
 
     window.addEventListener("hashchange", handleHashChange, true);
     return () => {
@@ -133,7 +136,7 @@ function App() {
   return (
     <>
       {
-        (iframeKey && iframeSrc && tokenLoaded) ? (
+        iframeKey && iframeSrc && tokenLoaded ? (
           <div className='myNginx' key='container'>
             <iframe key={iframeKey} title='nginxproxymanager' src={iframeSrc} />
           </div>
