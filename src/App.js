@@ -40,14 +40,13 @@ function App() {
   }
 
   const getToken = async () => {
-    var userName;
-    var userPwd;
-    var nikeName;
-    cockpit.file('/data/websoft9/appmanage_new/src/config/config.ini').read().then(async (content) => {
+    try {
+      const content = await cockpit.file('/var/lib/docker/volumes/websoft9_apphub_config/_data/config.ini').read();
+
       const config = ini.parse(content);
-      userName = config.nginx_proxy_manager.user_name
-      userPwd = config.nginx_proxy_manager.user_pwd
-      nikeName = config.nginx_proxy_manager.nike_name
+      const userName = config.nginx_proxy_manager.user_name
+      const userPwd = config.nginx_proxy_manager.user_pwd
+      const nikeName = config.nginx_proxy_manager.nike_name
 
       if (!userName || !userPwd || !nikeName) {
         setShowAlert(true);
@@ -68,13 +67,14 @@ function App() {
         setShowAlert(true);
         setAlertMessage("Auth Nginxproxymanager Error.")
       }
-    }).catch(error => {
+    }
+    catch (error) {
       setShowAlert(true);
-      setAlertMessage("Get Nginx Login Info Error.");
-    })
+      setAlertMessage("Auth Nginxproxymanager Error.")
+    }
   }
 
-  const getData = async () => {
+  const autoLogin = async () => {
     const tokens = getCookieValue("nginx_tokens");
     const nikeName = getCookieValue("nginx_nikeName");
 
@@ -121,8 +121,8 @@ function App() {
     }
   }
 
-  useEffect(async () => {
-    await getData();
+  useEffect(() => {
+    autoLogin();
 
     window.addEventListener("hashchange", handleHashChange, true);
     return () => {
