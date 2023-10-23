@@ -1,7 +1,6 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import cockpit from 'cockpit';
-import ini from 'ini';
 import jwt_decode from 'jwt-decode';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-bootstrap';
@@ -41,12 +40,13 @@ function App() {
 
   const getToken = async () => {
     try {
-      const content = await cockpit.file('/var/lib/docker/volumes/websoft9_apphub_config/_data/config.ini').read();
+      var script = "docker exec -i websoft9-apphub apphub getconfig --section nginx_proxy_manager";
+      let content = (await cockpit.spawn(["/bin/bash", "-c", script])).trim();
+      content = JSON.parse(content);
 
-      const config = ini.parse(content);
-      const userName = config.nginx_proxy_manager.user_name
-      const userPwd = config.nginx_proxy_manager.user_pwd
-      const nikeName = config.nginx_proxy_manager.nike_name
+      const userName = content.user_name
+      const userPwd = content.user_pwd
+      const nikeName = content.nike_name
 
       if (!userName || !userPwd || !nikeName) {
         setShowAlert(true);
@@ -70,7 +70,7 @@ function App() {
     }
     catch (error) {
       setShowAlert(true);
-      setAlertMessage("Auth Nginxproxymanager Error.")
+      setAlertMessage("Login Nginxproxymanager Error." + error)
     }
   }
 
