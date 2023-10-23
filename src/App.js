@@ -70,7 +70,7 @@ function App() {
     }
     catch (error) {
       setShowAlert(true);
-      setAlertMessage("Login Nginxproxymanager Error." + error)
+      setAlertMessage("Login Nginxproxymanager Error.")
     }
   }
 
