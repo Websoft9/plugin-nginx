@@ -1,7 +1,6 @@
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import cockpit from 'cockpit';
-import jwt_decode from 'jwt-decode';
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-bootstrap';
 import Spinner from 'react-bootstrap/Spinner';
@@ -13,35 +12,12 @@ function App() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [tokenLoaded, setTokenLoaded] = useState(false);
-
-  let protocol = window.location.protocol;
-  let host = window.location.host;
-  const baseURL = protocol + "//" + (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(host) ? host.split(":")[0] : host);
-
-  //获取cookie
-  function getCookieValue(cookieName) {
-    const cookies = document.cookie.split('; ');
-    for (const cookie of cookies) {
-      const [name, value] = cookie.split('=');
-      if (name === cookieName) {
-        return decodeURIComponent(value);
-      }
-    }
-    return null; // 如果没有找到该 Cookie 返回 null
-  }
-
-  //验证token是否过期
-  async function isTokenExpired(token) {
-    const decodedToken = jwt_decode(token);
-    const currentTime = await cockpit.spawn(["date", "+%s"]);
-    //const currentTime = Math.floor(Date.now() / 1000);
-    return decodedToken.exp < currentTime;
-  }
+  const baseURL = `${window.location.protocol}//${window.location.hostname}`;
 
   const getToken = async () => {
     try {
       var script = "docker exec -i websoft9-apphub apphub getconfig --section nginx_proxy_manager";
-      let content = (await cockpit.spawn(["/bin/bash", "-c", script])).trim();
+      let content = (await cockpit.spawn(["/bin/bash", "-c", script], { superuser: "try" })).trim();
       content = JSON.parse(content);
 
       const userName = content.user_name
@@ -70,27 +46,22 @@ function App() {
     }
     catch (error) {
       setShowAlert(true);
-      setAlertMessage("Login Nginxproxymanager Error.")
+      const errorText = [error.problem, error.reason, error.message]
+        .filter(item => typeof item === 'string')
+        .join(' ');
+
+      if (errorText.includes("permission denied")) {
+        setAlertMessage("Permission denied.");
+      }
+      else {
+        setAlertMessage(errorText || "Login Nginxproxymanager Error.");
+      }
     }
   }
 
   const autoLogin = async () => {
-    const tokens = getCookieValue("nginx_tokens");
-    const nikeName = getCookieValue("nginx_nikeName");
-
     try {
-      if (!tokens || !nikeName) {
-        await getToken();
-      }
-      else {
-        const isExpired = await isTokenExpired(tokens);
-        if (isExpired) { //如果已经过期，重新生成Tokens
-          await getToken();
-        }
-        else {
-          setTokenLoaded(true);
-        }
-      }
+      await getToken();
 
       setIframeKey(Math.random());
       var newHash = window.location.hash;
