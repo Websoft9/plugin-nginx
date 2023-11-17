@@ -6,8 +6,7 @@
 # Websoft9 Plugin - `nginx`
 
 This plugin is the entrance to nginxproxymanage service, it is  used to manage domains for installed applications.
-![image](https://github.com/Websoft9/plugin-nginx/assets/43192516/f90aa375-26f8-4e17-9d8c-87040ef08e50)
-
+![image](https://github.com/Websoft9/plugin-nginx/assets/43192516/0f88c447-cde7-4b84-bdd4-f24f59075530)
 
 ## Installation and update
 
