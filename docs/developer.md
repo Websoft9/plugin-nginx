@@ -10,7 +10,7 @@
 
 **Backend API**  
 
-- apphub: Nginx API is used to provide service  for the apphub, such as CRUD domains to installed applications.
+- apphub: Nginx API is used to provide service for the apphub, such as CRUD and proxys domains to installed applications.
 - cockpit: this is for running command at host machine
 
 
