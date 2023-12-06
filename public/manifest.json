@@ -1,5 +1,5 @@
 {
-  "version": "0.0.6",
+  "version": "0.0.6-rc5",
   "menu": {
     "nginx": {
       "label": "Nginx",
