@@ -12,7 +12,7 @@ function App() {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [tokenLoaded, setTokenLoaded] = useState(false);
-  const baseURL = `${window.location.protocol}//${window.location.hostname}`;
+  var baseURL = "";
 
   const getToken = async () => {
     try {
@@ -23,10 +23,13 @@ function App() {
       const userName = content.user_name
       const userPwd = content.user_pwd
       const nikeName = content.nike_name
+      const listenPort = content.listen_port
 
-      if (!userName || !userPwd || !nikeName) {
+      baseURL = `${window.location.protocol}//${window.location.hostname}:${listenPort}`;
+
+      if (!userName || !userPwd || !nikeName || !listenPort) {
         setShowAlert(true);
-        setAlertMessage("Nginx Username or Password is empty.");
+        setAlertMessage("Nginx Username or Password or ListenPort Not Set.");
         return;
       }
 
